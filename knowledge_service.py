@@ -29,8 +29,8 @@ class KnowledgeService(object):
 
     def __init__(self):
         self.knowledge_base = None
-        self.docs_path = '/kaggle/ChatGLM3/composite_demo/docs/'
-        self.knowledge_base_path = '/kaggle/ChatGLM3/composite_demo/knowledge_base/'
+        self.docs_path = '/kaggle/ChatGLM3/docs/'
+        self.knowledge_base_path = '/kaggle/ChatGLM3/knowledge_base/'
         # self.embeddings = '/kaggle/text2vec-large-chinese'
         self.embeddings = HuggingFaceEmbeddings(model_name='shibing624/text2vec-base-chinese')
     #     与这个绝对路径无关
