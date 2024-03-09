@@ -108,7 +108,6 @@ class KnowledgeService(object):
         else:
             self.knowledge_base.add_documents(split_doc)
 
-
     #  下面这个函数没有被调用，这个应该是以及转化好的向量知识库保存的位置，可以直接调用，省去转化的步骤
     def load_knowledge_base(self, path):
         if path is None:
@@ -118,60 +117,5 @@ class KnowledgeService(object):
         return self.knowledge_base
 
 
-    def search(self, query, top_k=5):
-        """
-        在知识库中搜索与查询最相关的条目
-
-        :param query: 查询字符串
-        :param top_k: 返回的最相关结果数量，默认为5
-        :return: 搜索结果列表和距离列表
-        """
-        # 确保知识库已初始化
-        if not self.knowledge_base:
-            raise ValueError("Knowledge base has not been initialized.")
-
-        # 使用 HuggingFaceEmbeddings 模型将查询转化为向量
-        query_embedding = self.embeddings.encode([query])
-
-        # 使用FAISS从知识库中检索最相似的文档
-        distances, indices = self.knowledge_base.search(query_embedding, top_k)
-
-        # 可以选择性地返回原始文档或它们的某些元数据
-        results = [self.knowledge_base.index_to_document[idx] for idx in indices[0]]
-
-        return results, distances
 
 
-# 这两个函数`init_knowledge_base`和`add_document`都是假定的代码片段，
-# 应该是用于处理和存储文档的一部分。下面我将分别解释每个函数的作用以及`docs`和`knowledge_base`的区别。
-
-# 1. `init_knowledge_base`函数的作用:
-
-# 这个函数的目的似乎是初始化一个知识库，它通过加载不同格式的文件（如txt, md, pdf, jpg），
-# 并将它们转换成内部的数据结构。这里的步骤通常包括：
-
-# - 遍历一个文档路径(`self.docs_path`)，加载不同格式的文件。
-# - 使用不同的加载器(`loader`)根据文件格式（txt, md, pdf, jpg）读取文件内容。
-# - 对读取的文件内容进行分割，这里的分割可能是将文档切割成更小的部分以便于之后的处理。
-# - 对于图片文件（jpg格式），使用OCR技术提取文本内容。
-# - 将所有处理过的文档内容添加到`docs`列表中。
-
-# - 最后将`docs`列表中的内容转换为向量形式，并存储在`self.knowledge_base`对象中，
-# 使用的是FAISS库，这是一个高效的相似性搜索和密集向量聚类库。
-
-# 2. `add_document`函数的作用:
-# 这个函数的目的是向已经初始化的知识库中添加额外的文档。它处理单个文件（`document_path`参数），
-# 并且将该文件分割成小的部分（如果需要），然后添加到知识库中。这个函数的步骤是：
-
-# - 确定传入的`document_path`文件格式。
-# - 使用相应的加载器读取和分割文档内容。
-# - 如果`self.knowledge_base`对象未初始化，用当前文档初始化它。
-# - 如果已初始化，则将新文档的内容添加到现有的知识库中。
-#
-# `docs`和`knowledge_base`的区别:
-# - `docs`是一个临时的列表，用来存储从文件中加载并可能经过分割的原始文档数据。
-
-# - `knowledge_base`是一个对象，它表示构建好的、可以用于检索和分析的知识库。
-# 在`init_knowledge_base`函数中，它是通过将`docs`中的文档转换为向量并用FAISS处理来构建的。
-
-# 简而言之，`docs`是原始文档数据的集合，而`knowledge_base`是这些数据经过处理和向量化后，用于快速搜索和检索的结构化形式。`init_knowledge_base`函数用于初始化整个知识库，而`add_document`函数用于向已存在的知识库中添加新的文档。

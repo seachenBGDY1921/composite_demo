@@ -13,6 +13,12 @@ from transformers.generation.utils import LogitsProcessorList
 
 from conversation import Conversation
 
+from langchain.chains import RetrievalQA
+from langchain.prompts.prompt import PromptTemplate
+from service.chatglm_service import ChatGLMService
+from knowledge_service import KnowledgeService
+
+
 TOOL_PROMPT = 'Answer the following questions as best as you can. You have access to the following tools:'
 
 MODEL_PATH = os.environ.get('MODEL_PATH', 'THUDM/chatglm3-6b')
@@ -127,6 +133,10 @@ class HFClient(Client):
         self.model_path = model_path
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path, trust_remote_code=True)
 
+        self.knowledge_service = KnowledgeService()
+        self.knowledge_service.init_knowledge_base()
+        self.knowledge_base_path = self.knowledge_service.knowledge_base_path
+
         if pt_checkpoint is not None and os.path.exists(pt_checkpoint):
             config = AutoConfig.from_pretrained(
                 model_path,
@@ -147,7 +157,7 @@ class HFClient(Client):
             print("Loaded from pt checkpoints", new_prefix_state_dict.keys())
             self.model.transformer.prefix_encoder.load_state_dict(new_prefix_state_dict)
         else:
-            self.model = AutoModel.from_pretrained(MODEL_PATH, trust_remote_code=True, device_map="auto").eval()
+            self.model = AutoModel.from_pretrained(MODEL_PATH, trust_remote_code=True).quantize(4).cuda().eval()
             # add .quantize(4).cuda() before .eval() and remove device_map="auto" to use int4 model
 
     def generate_stream(
