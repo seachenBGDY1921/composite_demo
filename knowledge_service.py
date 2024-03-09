@@ -6,10 +6,6 @@ vector service
 """
 
 import os
-# import nltk
-import streamlit as st
-# work_dir = '/kaggle'
-# nltk.data.path.append(os.path.join(work_dir, 'nltk_data'))
 
 
 from langchain_community.vectorstores import FAISS
@@ -20,19 +16,12 @@ from rapidocr_onnxruntime import RapidOCR
 
 
 class KnowledgeService(object):
-    # def __init__(self, config):
-    #     self.config = config
-    #     self.knowledge_base = None
-    #     self.docs_path = self.config.docs_path
-    #     self.knowledge_base_path = self.config.knowledge_base_path
-    #     self.embeddings = HuggingFaceEmbeddings(model_name=self.config.embedding_model_path)
 
     def __init__(self):
         self.knowledge_base = None
         self.docs_path = '/kaggle/ChatGLM3/docs/'
         self.knowledge_base_path = '/kaggle/ChatGLM3/knowledge_base/'
         self.embeddings = HuggingFaceEmbeddings(model_name='shibing624/text2vec-base-chinese')
-    #     与这个绝对路径无关
 
     def init_knowledge_base(self):
         """
@@ -85,9 +74,12 @@ class KnowledgeService(object):
         # 知识库索引文件的完整路径
         index_file_path = os.path.join(self.knowledge_base_path, 'knowledge_base.index')
 
-        # 保存知识库索引
-        self.knowledge_base.save(index_file_path)
-        print(f"知识库索引已保存到 {index_file_path}")
+        if isinstance(self.knowledge_base, faiss.Index):
+            # 保存知识库索引
+            faiss.write_index(self.knowledge_base, index_file_path)
+            print(f"知识库索引已保存到 {index_file_path}")
+        else:
+            print("无法保存索引：self.knowledge_base 不是一个 FAISS Index 实例。")
 
     def add_document(self, document_path):
         split_doc = []
