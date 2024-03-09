@@ -7,7 +7,7 @@ vector service
 
 import os
 
-
+import faiss
 from langchain_community.vectorstores import FAISS
 from langchain.text_splitter import CharacterTextSplitter, MarkdownTextSplitter
 from langchain_community.document_loaders import UnstructuredFileLoader, UnstructuredMarkdownLoader, UnstructuredPDFLoader
