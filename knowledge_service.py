@@ -31,7 +31,6 @@ class KnowledgeService(object):
         self.knowledge_base = None
         self.docs_path = '/kaggle/ChatGLM3/docs/'
         self.knowledge_base_path = '/kaggle/ChatGLM3/knowledge_base/'
-        # self.embeddings = '/kaggle/text2vec-large-chinese'
         self.embeddings = HuggingFaceEmbeddings(model_name='shibing624/text2vec-base-chinese')
     #     与这个绝对路径无关
 
@@ -76,6 +75,20 @@ class KnowledgeService(object):
         # 这里调用出问题，
         self.knowledge_base = FAISS.from_documents(docs, self.embeddings)
 
+        self.save_knowledge_base()
+
+    def save_knowledge_base(self):
+        # 确保有一个目录来保存知识库索引
+        if not os.path.exists(self.knowledge_base_path):
+            os.makedirs(self.knowledge_base_path)
+
+        # 知识库索引文件的完整路径
+        index_file_path = os.path.join(self.knowledge_base_path, 'knowledge_base.index')
+
+        # 保存知识库索引
+        self.knowledge_base.save(index_file_path)
+        print(f"知识库索引已保存到 {index_file_path}")
+
     def add_document(self, document_path):
         split_doc = []
         if document_path.endswith('.txt'):
@@ -108,12 +121,19 @@ class KnowledgeService(object):
         else:
             self.knowledge_base.add_documents(split_doc)
 
-    #  下面这个函数没有被调用，这个应该是以及转化好的向量知识库保存的位置，可以直接调用，省去转化的步骤
-    def load_knowledge_base(self, path):
-        if path is None:
-            self.knowledge_base = FAISS.load_local(self.knowledge_base_path, self.embeddings)
+    #  path=None本来是没有的，但是为了便于理解path的凭空产生，所以加了一个
+    def load_knowledge_base(self, path=None):
+        # 如果没有提供路径，则使用默认的知识库索引文件路径
+        index_file_path = os.path.join(self.knowledge_base_path, 'knowledge_base.index') if path is None else path
+
+        # 加载知识库索引
+        if os.path.exists(index_file_path):
+            self.knowledge_base = faiss.read_index(index_file_path)
+            print(f"已从 {index_file_path} 加载知识库索引。")
         else:
-            self.knowledge_base = FAISS.load_local(path, self.embeddings)
+            print("知识库索引文件不存在，将初始化一个新的知识库索引。")
+            self.init_knowledge_base()
+
         return self.knowledge_base
 
 
