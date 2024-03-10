@@ -75,12 +75,12 @@ class KnowledgeService(object):
         # 知识库索引文件的完整路径
         index_file_path = os.path.join(self.knowledge_base_path, 'knowledge_base.index')
 
-        # 保存知识库索引，由于不再使用原生的faiss库函数，需要替换为FAISS类的save_local方法
-        if hasattr(self.knowledge_base, 'save_local'):
-            self.knowledge_base.save_local(self.knowledge_base_path)
+        if isinstance(self.knowledge_base, faiss.Index):
+            # 保存知识库索引
+            faiss.write_index(self.knowledge_base, index_file_path)
             print(f"知识库索引已保存到 {index_file_path}")
         else:
-            print("无法保存索引：self.knowledge_base 不是一个 FAISS 实例。")
+            print("无法保存索引：self.knowledge_base 不是一个 FAISS Index 实例。")
 
     # def search_knowledge_base(self, query):
     #     """
@@ -94,25 +94,14 @@ class KnowledgeService(object):
     #         raise ValueError("知识库索引未初始化，请先调用 init_knowledge_base 方法。")
     #
     #     # 使用嵌入模型将查询转换为向量
-    #     query_vector = self.embeddings.embed_query(query)  # embed_query方法可能接受单个字符串，而不是列表
+    #     query_vector = self.embeddings.embed_query([query])[0]
     #
-    #     # 由于我们使用的是FAISS类，我们不再直接与faiss库交互
-    #     # 因此，我们使用FAISS类的方法来执行搜索
-    #     # 这里我们使用similarity_search方法，它接收查询和返回最相似文档数量k
+    #     # 在FAISS索引中执行搜索
     #     k = 10  # 假设我们想要前10个最相似的结果
+    #     D, I = self.knowledge_base.search(query_vector, k)
     #
-    #     # FAISS类可能要求query_vector是一个list，如果是单个向量，我们需要将其转换为列表
-    #     if not isinstance(query_vector, list):
-    #         query_vector = [query_vector]
-    #
-    #     # 以下代码中，我们假设FAISS类返回的是一个包含(Document对象, 分数)元组的列表
-    #     # 这里我们只关心Document对象
-    #     results = self.knowledge_base.similarity_search_with_score(query_vector, k)
-    #
-    #     # 将搜索结果仅提取文档的索引
-    #     doc_indices = [doc.id for doc, _ in results]
-    #
-    #     return doc_indices
+    #     # 返回最相似的文档索引
+    #     return I[0].tolist()
 
     def search_knowledge_base(self, query_text, top_k=5):
         # 确保知识库是加载的
@@ -188,13 +177,14 @@ class KnowledgeService(object):
 
         # 加载知识库索引
         if os.path.exists(index_file_path):
-            self.knowledge_base = FAISS.load_local(self.knowledge_base_path, self.embeddings)
+            self.knowledge_base = faiss.read_index(index_file_path)
             print(f"已从 {index_file_path} 加载知识库索引。")
         else:
             print("知识库索引文件不存在，将初始化一个新的知识库索引。")
             self.init_knowledge_base()
 
         return self.knowledge_base
+
 
 
 
