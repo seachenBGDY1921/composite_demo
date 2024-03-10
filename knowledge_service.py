@@ -81,6 +81,68 @@ class KnowledgeService(object):
         else:
             print("无法保存索引：self.knowledge_base 不是一个 FAISS Index 实例。")
 
+    def search_knowledge_base(self, query):
+        """
+        在知识库中搜索与查询最相似的文档。
+
+        :param query: 要搜索的查询字符串。
+        :return: 搜索结果，通常是一个包含最相似文档索引的列表。
+        """
+        # 确保知识库已经初始化
+        if not self.knowledge_base:
+            raise ValueError("知识库索引未初始化，请先调用 init_knowledge_base 方法。")
+
+        # 使用嵌入模型将查询转换为向量
+        query_vector = self.embeddings.embed([query])[0]  # 假设 embed 方法接受一个文本列表并返回向量列表
+
+        # 在FAISS索引中执行搜索
+        k = 10  # 假设我们想要前10个最相似的结果
+        D, I = self.knowledge_base.search(query_vector, k)
+
+        # 返回最相似的文档索引
+        return I[0].tolist()
+
+
+    def search_knowledge_base(self, query_text, top_k=5):
+        """
+        查询知识库以找到与query_text最相关的文档。
+
+        :param query_text: 查询文本
+        :param top_k: 返回的最相似文档数量
+        :return: 最相似的文档及其分数
+        """
+        # 确保知识库是加载的
+        if self.knowledge_base is None:
+            self.load_knowledge_base()
+
+        # 计算查询文本的向量表示
+        query_vector = self.embeddings.encode([query_text])
+
+        # 使用FAISS进行搜索
+        D, I = self.knowledge_base.search(query_vector, top_k)  # D是距离，I是索引
+
+        # 解析搜索结果
+        results = []
+        for i, (distance, idx) in enumerate(zip(D[0], I[0])):
+            result = {
+                'rank': i + 1,
+                'distance': distance,
+                'document_id': idx,
+                # 如果你有一个文档ID到文档内容的映射，你可以在这里添加更多信息
+            }
+            results.append(result)
+
+        return results
+
+    # 示例使用：
+    # ks = KnowledgeService()
+    # ks.load_knowledge_base()  # 首先加载知识库
+    # query_results = ks.search_knowledge_base("查询的文本内容")
+    # for result in query_results:
+    #     print(result)
+
+
+
     def add_document(self, document_path):
         split_doc = []
         if document_path.endswith('.txt'):

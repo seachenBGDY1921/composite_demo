@@ -186,6 +186,8 @@ class HFClient(Client):
         query = history[-1].content
         role = str(history[-1].role).removeprefix('<|').removesuffix('|>')
         text = ''
+        # 查询知识库
+        knowledge_base_response = self.knowledge_service.search_knowledge_base(query)
         for new_text, _ in stream_chat(
                 self.model,
                 self.tokenizer,
@@ -197,12 +199,36 @@ class HFClient(Client):
             word = new_text.removeprefix(text)
             word_stripped = word.strip()
             text = new_text
-            yield TextGenerationStreamResponse(
-                generated_text=text,
-                token=Token(
-                    id=0,
-                    logprob=0,
-                    text=word,
-                    special=word_stripped.startswith('<|') and word_stripped.endswith('|>'),
+
+            if knowledge_base_response:
+                yield TextGenerationStreamResponse(
+                    generated_text=knowledge_base_response,
+                    token=Token(
+                        id=0,
+                        logprob=0,
+                        text=knowledge_base_response,
+                        special=False
+                    )
                 )
-            )
+            # 如果知识库中没有答案，使用默认回答
+            elif default_response:
+                yield TextGenerationStreamResponse(
+                    generated_text=default_response,
+                    token=Token(
+                        id=0,
+                        logprob=0,
+                        text=default_response,
+                        special=False
+                    )
+                )
+            # 如果是模型生成的文本，正常处理
+            else:
+                yield TextGenerationStreamResponse(
+                    generated_text=text,
+                    token=Token(
+                        id=0,
+                        logprob=0,
+                        text=word,
+                        special=word_stripped.startswith('<|') and word_stripped.endswith('|>'),
+                    )
+                )
