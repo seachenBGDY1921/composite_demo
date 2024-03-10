@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import traceback
 import os
 import streamlit as st
 import torch
@@ -46,7 +47,8 @@ class Client(Protocol):
 
 
 def stream_chat(
-        self, tokenizer, query: str,
+        # self, tokenizer, query: str,
+        tokenizer, query: str,
         history: list[tuple[str, str]] = None,
         role: str = "user",
         past_key_values=None,
@@ -248,6 +250,7 @@ class HFClient(Client):
         except Exception as e:
             # 打印错误日志
             print(f"An error occurred in generate_stream: {e}")
+            traceback.print_exc()
             # 返回一个空的迭代器
             yield TextGenerationStreamResponse(
                 generated_text="",
