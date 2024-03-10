@@ -47,8 +47,7 @@ class Client(Protocol):
 
 
 def stream_chat(
-        # self, tokenizer, query: str,
-        tokenizer, query: str,
+        self,tokenizer, query: str,
         history: list[tuple[str, str]] = None,
         role: str = "user",
         past_key_values=None,

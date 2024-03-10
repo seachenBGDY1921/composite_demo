@@ -108,19 +108,19 @@ class KnowledgeService(object):
     #     # 返回搜索结果，每个结果是一个包含文档和分数的元组
     #     return results
 
-    def search_knowledge_base(self, query_text, top_k=5, search_type='similarity'):
+    def search_knowledge_base(self, query, top_k=5):
         # 确保知识库是加载的
         if self.knowledge_base is None:
             self.load_knowledge_base()
 
-        # 计算查询文本的向量表示，使用embed_query替换原来的encode方法
-        query_vector = self.embeddings.embed_query(text=query_text)
+        # 计算查询文本的向量表示
+        query_vector = self.embeddings.embed_query(text=query)
 
         # 将查询向量转换为适合FAISS搜索的格式
         query_vector = np.array(query_vector).astype("float32").reshape(1, -1)
 
-        # 使用FAISS进行搜索，这里传入了正确的search_type
-        D, I = self.knowledge_base.search(query_vector, top_k, search_type=search_type)
+        # 使用FAISS进行搜索
+        D, I = self.knowledge_base.search(query_vector, top_k)
 
         # 解析搜索结果
         results = []
