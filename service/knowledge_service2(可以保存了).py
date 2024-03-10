@@ -81,13 +81,12 @@ class KnowledgeService(object):
         else:
             print("无法保存索引：self.knowledge_base 不是一个 FAISS 实例。")
 
-    # def search_knowledge_base(self, query, top_k=10):
+    # def search_knowledge_base(self, query):
     #     """
     #     在知识库中搜索与查询最相似的文档。
     #
     #     :param query: 要搜索的查询字符串。
-    #     :param top_k: 返回的最相似文档数量，默认为10。
-    #     :return: 搜索结果，通常是一个包含最相似文档对象及其相关分数的列表。
+    #     :return: 搜索结果，通常是一个包含最相似文档索引的列表。
     #     """
     #     # 确保知识库已经初始化
     #     if not self.knowledge_base:
@@ -96,17 +95,23 @@ class KnowledgeService(object):
     #     # 使用嵌入模型将查询转换为向量
     #     query_vector = self.embeddings.embed_query(query)  # embed_query方法可能接受单个字符串，而不是列表
     #
-    #     # 确保查询向量是正确的格式
+    #     # 由于我们使用的是FAISS类，我们不再直接与faiss库交互
+    #     # 因此，我们使用FAISS类的方法来执行搜索
+    #     # 这里我们使用similarity_search方法，它接收查询和返回最相似文档数量k
+    #     k = 10  # 假设我们想要前10个最相似的结果
+    #
+    #     # FAISS类可能要求query_vector是一个list，如果是单个向量，我们需要将其转换为列表
     #     if not isinstance(query_vector, list):
     #         query_vector = [query_vector]
-    #     query_vector = np.array(query_vector).astype('float32')
     #
-    #     # 使用FAISS执行搜索，这里我们使用similarity_search_with_score方法，它接收查询和返回最相似文档数量k
-    #     # 调整传递给搜索方法的参数，以确保使用正确的搜索类型
-    #     results = self.knowledge_base.similarity_search_with_score(query_vector, k=top_k)
+    #     # 以下代码中，我们假设FAISS类返回的是一个包含(Document对象, 分数)元组的列表
+    #     # 这里我们只关心Document对象
+    #     results = self.knowledge_base.similarity_search_with_score(query_vector, k)
     #
-    #     # 返回搜索结果，每个结果是一个包含文档和分数的元组
-    #     return results
+    #     # 将搜索结果仅提取文档的索引
+    #     doc_indices = [doc.id for doc, _ in results]
+    #
+    #     return doc_indices
 
     def search_knowledge_base(self, query_text, top_k=5, search_type='similarity'):
         # 确保知识库是加载的
